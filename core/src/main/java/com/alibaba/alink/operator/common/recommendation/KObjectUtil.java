@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.Locale;//add
+import java.util.LinkedHashMap;//add
 
 public class KObjectUtil {
 	public static final String OBJECT_NAME = "object";
@@ -23,11 +25,13 @@ public class KObjectUtil {
 	public static final String SCORE_NAME = "score";
 
 	public static String serializeKObject(Map <String, List <Object>> kobject) {
-		Map <String, String> result = new HashMap <>();
+		Map <String, String> result = new LinkedHashMap <>();
 
-		for (Map.Entry <String, List <Object>> entry : kobject.entrySet()) {
-			result.put(entry.getKey(), JsonConverter.toJson(entry.getValue()));
-		}
+		//for (Map.Entry <String, List <Object>> entry : kobject.entrySet()) {
+		//	result.put(entry.getKey(), JsonConverter.toJson(entry.getValue()));
+		//}
+		
+		kobject.keySet().stream().sorted().forEach(k -> result.put(k, JsonConverter.toJson(kobject.get(k))));
 
 		return JsonConverter.toJson(result);
 	}
@@ -55,60 +59,30 @@ public class KObjectUtil {
 		Map <String, String> lowerCaseDeserializedJson = new HashMap <>();
 
 		for (Map.Entry <String, String> entry : deserializedJson.entrySet()) {
-			//lowerCaseDeserializedJson.put(entry.getKey().trim().toLowerCase(), entry.getValue());
-			lowerCaseDeserializedJson.put(entry.getKey().trim().toLowerCase(Locale.ROOT), entry.getValue());//fixed LOCALE
+			lowerCaseDeserializedJson.put(entry.getKey().trim().toLowerCase(Locale.ROOT), entry.getValue());//add Locale
 		}
 
-		//Map <String, List <Object>> result = new HashMap <>();
+		Map<String, List<Object>> result = new LinkedHashMap<>();//Preserve the order of kObjectNames in the output map
 
-		// for (int i = 0; i < kObjectNames.length; ++i) {
-		// 	String lookUpResult = lowerCaseDeserializedJson.get(kObjectNames[i].trim().toLowerCase());
 
-		// 	if (lookUpResult == null) {
-		// 		result.put(kObjectNames[i], null);
-		// 	} else {
-		// 		result.put(
-		// 			kObjectNames[i],
-		// 			JsonConverter.fromJson(
-		// 				lookUpResult,
-		// 				ParameterizedTypeImpl.make(List.class, new Type[] {kObjectTypes[i]}, null)
-		// 			)
-		// 		);
-		// 	}
-		// }
-		// Use LinkedHashMap to preserve order
-		Map<String, List<Object>> result = new LinkedHashMap<>();
-		
-		for (int i = 0; i < kObjectNames.length; i++) {
-		    String name = kObjectNames[i];
-		    Type elemType = kObjectTypes[i];
-		
-		    // New null checks for each element
-		    if (name == null) throw new IllegalArgumentException("kObjectNames[" + i + "] is null.");
-		    if (elemType == null) throw new IllegalArgumentException("kObjectTypes[" + i + "] is null.");
-		
-		    String keyNorm = name.trim().toLowerCase(Locale.ROOT);
-		    String payload = lowerCaseDeserializedJson.get(keyNorm);
-		
-		    if (payload == null) {
-		        result.put(name, null); // Explicit design choice documented
-		        continue;
-		    }
-		
-		    // Added try–catch for inner JSON parsing
-		    try {
-		        List<Object> value = JsonConverter.fromJson(
-		            payload,
-		            ParameterizedTypeImpl.make(List.class, new Type[] {elemType}, null)
-		        );
-		        result.put(name, value);
-		    } catch (Exception e) {
-		        throw new AkParseErrorException(
-		            "Fail to deserialize list for key '" + name + "' with payload: " + payload, e);
-		    }
+		for (int i = 0; i < kObjectNames.length; ++i) {
+			String lookUpResult = lowerCaseDeserializedJson.get(kObjectNames[i].trim().toLowerCase(Locale.ROOT));
+
+			if (lookUpResult == null) {
+				result.put(kObjectNames[i], null);
+			} else {
+				result.put(
+					kObjectNames[i],
+					JsonConverter.fromJson(
+						lookUpResult,
+						ParameterizedTypeImpl.make(List.class, new Type[] {kObjectTypes[i]}, null)
+					)
+				);
+			}
 		}
 
 		return result;
+
 	}
 
 	public static String serializeRecomm(
@@ -142,13 +116,20 @@ public class KObjectUtil {
 	public static MTable MergeRecommMTable(MTable recommJson, MTable initRecommJson) {
 		List <Row> recommRows = recommJson.getRows();
 		List <Row> initRows = initRecommJson.getRows();
-		Set <Row> set = new HashSet <>(recommRows.size());
+		Map<Object,Row> byKey = new LinkedHashMap<>();
+		//Set <Row> set = new HashSet <>(recommRows.size());
 		for (Row row : recommRows) {
-			set.add(Row.of(row.getField(0)));
+			Object k = row.getField(0);
+			//set.add(Row.of(row.getField(0)));
+			byKey.putIfAbsent(k,Row.of(k));
 		}
 		for (Row row : initRows) {
-			set.add(Row.of(row.getField(0)));
+			Object k = row.getField(0);
+			byKey.putIfAbsent(k,Row.of(k));
+			//set.add(Row.of(row.getField(0)));
 		}
-		return new MTable(new ArrayList <>(set), recommJson.getSchemaStr().split(",")[0]);
+		return new MTable(new ArrayList <>(byKey.values()), recommJson.getSchemaStr().split(",")[0]);
 	}
+	
 }
+
