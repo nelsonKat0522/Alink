@@ -55,57 +55,25 @@ public class KObjectUtil {
 		Map <String, String> lowerCaseDeserializedJson = new HashMap <>();
 
 		for (Map.Entry <String, String> entry : deserializedJson.entrySet()) {
-			//lowerCaseDeserializedJson.put(entry.getKey().trim().toLowerCase(), entry.getValue());
-			lowerCaseDeserializedJson.put(entry.getKey().trim().toLowerCase(Locale.ROOT), entry.getValue());//fixed LOCALE
+			lowerCaseDeserializedJson.put(entry.getKey().trim().toLowerCase(), entry.getValue());
 		}
 
-		//Map <String, List <Object>> result = new HashMap <>();
+		Map <String, List <Object>> result = new HashMap <>();
 
-		// for (int i = 0; i < kObjectNames.length; ++i) {
-		// 	String lookUpResult = lowerCaseDeserializedJson.get(kObjectNames[i].trim().toLowerCase());
+		for (int i = 0; i < kObjectNames.length; ++i) {
+			String lookUpResult = lowerCaseDeserializedJson.get(kObjectNames[i].trim().toLowerCase());
 
-		// 	if (lookUpResult == null) {
-		// 		result.put(kObjectNames[i], null);
-		// 	} else {
-		// 		result.put(
-		// 			kObjectNames[i],
-		// 			JsonConverter.fromJson(
-		// 				lookUpResult,
-		// 				ParameterizedTypeImpl.make(List.class, new Type[] {kObjectTypes[i]}, null)
-		// 			)
-		// 		);
-		// 	}
-		// }
-		// Use LinkedHashMap to preserve order
-		Map<String, List<Object>> result = new LinkedHashMap<>();
-		
-		for (int i = 0; i < kObjectNames.length; i++) {
-		    String name = kObjectNames[i];
-		    Type elemType = kObjectTypes[i];
-		
-		    // New null checks for each element
-		    if (name == null) throw new IllegalArgumentException("kObjectNames[" + i + "] is null.");
-		    if (elemType == null) throw new IllegalArgumentException("kObjectTypes[" + i + "] is null.");
-		
-		    String keyNorm = name.trim().toLowerCase(Locale.ROOT);
-		    String payload = lowerCaseDeserializedJson.get(keyNorm);
-		
-		    if (payload == null) {
-		        result.put(name, null); // Explicit design choice documented
-		        continue;
-		    }
-		
-		    // Added try–catch for inner JSON parsing
-		    try {
-		        List<Object> value = JsonConverter.fromJson(
-		            payload,
-		            ParameterizedTypeImpl.make(List.class, new Type[] {elemType}, null)
-		        );
-		        result.put(name, value);
-		    } catch (Exception e) {
-		        throw new AkParseErrorException(
-		            "Fail to deserialize list for key '" + name + "' with payload: " + payload, e);
-		    }
+			if (lookUpResult == null) {
+				result.put(kObjectNames[i], null);
+			} else {
+				result.put(
+					kObjectNames[i],
+					JsonConverter.fromJson(
+						lookUpResult,
+						ParameterizedTypeImpl.make(List.class, new Type[] {kObjectTypes[i]}, null)
+					)
+				);
+			}
 		}
 
 		return result;
