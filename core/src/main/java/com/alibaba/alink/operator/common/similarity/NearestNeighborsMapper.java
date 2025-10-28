@@ -17,7 +17,6 @@ import com.alibaba.alink.params.similarity.NearestNeighborPredictParams;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
-import java.util.Locale;//add
 
 public class NearestNeighborsMapper extends SISOModelMapper implements Cloneable {
 	private static final long serialVersionUID = 3350330064758380671L;
@@ -29,7 +28,7 @@ public class NearestNeighborsMapper extends SISOModelMapper implements Cloneable
 	public NearestNeighborsMapper(TableSchema modelSchema, TableSchema dataSchema, Params params) {
 		super(modelSchema, dataSchema, params);
 		this.dataConverter = NearestNeighborDataConverter.DataConverType
-			.valueOf(modelSchema.getFieldNames()[modelSchema.getFieldNames().length - 1].toUpperCase(Locale.ROOT))
+			.valueOf(modelSchema.getFieldNames()[modelSchema.getFieldNames().length - 1].toUpperCase())
 			.getDataConverter();
 		this.dataConverter.setIdType(modelSchema.getFieldTypes()[modelSchema.getFieldNames().length - 1]);
 		this.topN = this.params.get(NearestNeighborPredictParams.TOP_N);

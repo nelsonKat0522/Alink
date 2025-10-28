@@ -321,22 +321,8 @@
                             <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                             <autoReleaseAfterClose>false</autoReleaseAfterClose>
                         </configuration>
-		</plugin>
-
-		<plugin> 
-               		<groupId>edu.illinois</groupId>
-                	<artifactId>nondex-maven-plugin</artifactId>
-               		<version>1.0.1</version>
-               		<executions>
-                   		<execution>
-                       		<id>run-nondex</id>
-                       		<goals>
-                           		 <goal>nondex</goal>
-                       		</goals>
-                    		</execution>
-                	</executions>
-            	</plugin>
-               </plugins>
+                    </plugin>
+                </plugins>
             </build>
         </profile>
     </profiles>
