@@ -27,7 +27,9 @@ public class NearestNeighborModelData implements Serializable, Cloneable {
 	}
 
 	public String findNeighbor(Object input, Integer topN, Double radius) {
-		PriorityQueue <Tuple2 <Double, Object>> priorityQueue = new PriorityQueue <>(this.getQueueComparator());
+		PriorityQueue<Tuple2<Double, Object>> priorityQueue = 
+			new PriorityQueue<>(((java.util.Comparator<Tuple2<Double,Object>>) this.getQueueComparator())
+          		.thenComparing((a, b) -> String.valueOf(b.f1).compareTo(String.valueOf(a.f1))));
 		search(input, topN, Tuple2.of(radius, null), priorityQueue);
 
 		List <Object> items = new ArrayList <>();
