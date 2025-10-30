@@ -1,0 +1,66 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '8'
+        cache: maven
+    - name: Build with Maven
+      run: |
+          echo "==== BUILD PHASE ====" | tee ci-build.log
+          mvn -B clean install -DskipTests -pl core -am | tee -a ci-build.log
+
+    - name: Baseline test (no NonDex)
+      run: |
+          echo "==== BASELINE TEST (no NonDex) ====" | tee -a ci-build.log
+          mvn -B -pl core test \
+            -Dtest=com.alibaba.alink.operator.common.similarity.dataConverter.MinHashModelDataConverterTest#testJaccard \
+            | tee -a ci-build.log
+
+    - name: NonDex run (shuffle order)
+      run: |
+          echo "==== NONDEX TEST (with shuffling) ====" | tee -a ci-build.log
+          mvn -B -pl core \
+            edu.illinois:nondex-maven-plugin:2.1.1:nondex \
+            -Dtest=com.alibaba.alink.operator.common.similarity.dataConverter.MinHashModelDataConverterTest#testJaccard \
+            | tee -a ci-build.log
+      continue-on-error: true
+
+    - name: Upload combined build log
+      uses: actions/upload-artifact@v4
+      with:
+          name: ci-build-log
+          path: ci-build.log
+
+    - name: Save diff to file
+      run: |
+        git fetch origin master
+        git diff origin/master -- .github/workflows/maven.yml > nondex_method1.diff
+
+    - name: Upload diff file
+      uses: actions/upload-artifact@v4
+      with:
+        name: nondex_method1-diff
+        path: nondex_method1.diff
